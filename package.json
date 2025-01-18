@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "minify": "terser popin.js -o popin.min.js && csso popin.css -o popin.min.css"
+  },
+  "dependencies": {
+    "csso-cli": "^4.0.2",
+    "terser": "^5.37.0"
+  }
+}
