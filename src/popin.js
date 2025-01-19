@@ -1,6 +1,27 @@
 Popin.elements = [];
 
 function Popin(options = {}) {
+  if (!options.content && !options.templateId) {
+    console.error("You must provide one of 'content' or 'templateId'.");
+    return;
+  }
+
+  if (options.content && options.templateId) {
+    options.templateId = null;
+    console.warn(
+      "Both 'content' and 'templateId' are specified. 'content' will take precedence, and 'templateId' will be ignored"
+    );
+  }
+
+  if (options.templateId) {
+    this.template = document.querySelector(`#${options.templateId}`);
+
+    if (!this.template) {
+      console.error(`#${options.templateId} not found`);
+      return;
+    }
+  }
+
   this.opt = {
     destroyOnClose: true,
     footer: false,
@@ -8,13 +29,8 @@ function Popin(options = {}) {
     closeMethods: ["button", "overlay", "escape"],
     ...options,
   };
-  this.template = document.querySelector(`#${this.opt.templateId}`);
 
-  if (!this.template) {
-    console.error(`#${this.opt.templateId} not found`);
-    return;
-  }
-
+  this.content = this.opt.content;
   const { closeMethods } = this.opt;
   this._allowButtonClose = closeMethods.includes("button");
   this._allowBackdropClose = closeMethods.includes("overlay");
@@ -26,7 +42,13 @@ function Popin(options = {}) {
 }
 
 Popin.prototype._build = function () {
-  const content = this.template.content.cloneNode(true);
+  const contentNode = this.content
+    ? document.createElement("div")
+    : this.template.content.cloneNode(true);
+
+  if (this.content) {
+    contentNode.innerHTML = this.content;
+  }
 
   this._backdrop = document.createElement("div");
   this._backdrop.className = "popin__backdrop";
@@ -48,11 +70,11 @@ Popin.prototype._build = function () {
     container.append(closeBtn);
   }
 
-  const modalContent = document.createElement("div");
-  modalContent.className = "popin__content";
+  this._modalContent = document.createElement("div");
+  this._modalContent.className = "popin__content";
 
-  modalContent.append(content);
-  container.append(modalContent);
+  this._modalContent.append(contentNode);
+  container.append(this._modalContent);
 
   if (this.opt.footer) {
     this._modalFooter = document.createElement("div");
@@ -66,6 +88,13 @@ Popin.prototype._build = function () {
 
   this._backdrop.append(container);
   document.body.append(this._backdrop);
+};
+
+Popin.prototype.setContent = function (content) {
+  this.content = content;
+  if (this._modalContent) {
+    this._modalContent.innerHTML = this.content;
+  }
 };
 
 Popin.prototype.setFooterContent = function (html) {
